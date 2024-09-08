@@ -43,6 +43,9 @@ class TaskController extends Controller
 
         $task = new Task($validated);
         $user = User::where('email',$validated['user'])->first();
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
         $task->user_id = $user->id;
         $task->save();
         $task->user = $user['name'];
