@@ -1814,7 +1814,19 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         title: '',
         description: '',
         user: ''
-      }
+      },
+      selectedFilter: null,
+      loading: false,
+      optionFilters: [{
+        value: null,
+        text: "All"
+      }, {
+        value: "pending",
+        text: "Pending"
+      }, {
+        value: "completed",
+        text: "Completed"
+      }]
     };
   },
   computed: _objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_0__.mapState)(['tasks'])),
@@ -1825,9 +1837,11 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
         alert('Both title and description are required');
         return;
       }
-
       // Se utiliza la acción 'addTask' y luego se limpia el formulario
-      this.$store.dispatch('addTask', this.newTask).then(function () {
+      this.$store.dispatch('addTask', {
+        task: this.newTask,
+        filter: this.selectedFilter
+      }).then(function () {
         _this.newTask.title = '';
         _this.newTask.description = '';
         _this.newTask.user = '';
@@ -1837,7 +1851,10 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
     },
     completeTask: function completeTask(taskId) {
       // Se utiliza la acción 'completeTask'
-      this.$store.dispatch('completeTask', taskId)["catch"](function (error) {
+      this.$store.dispatch('completeTask', {
+        taskId: taskId,
+        filter: this.selectedFilter
+      }).then(function () {})["catch"](function (error) {
         console.error('Error completing task:', error);
       });
     },
@@ -1846,9 +1863,30 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
       this.$store.dispatch('deleteTask', taskId)["catch"](function (error) {
         console.error('Error deleting task:', error);
       });
+    },
+    refreshTasks: function refreshTasks() {
+      // Actualiza las tareas usando la acción 'fetchTasks'
+      this.loading = true;
+      this.$store.dispatch('fetchTasks', {
+        params: {
+          filter: this.selectedFilter
+        }
+      })["catch"](function (error) {
+        console.error("Error refreshing tasks:", error);
+      });
+      this.loading = false;
     }
   }),
-  mounted: function mounted() {}
+  watch: {
+    // Actualiza las tareas cuando se cambia el filtro
+    selectedFilter: function selectedFilter() {
+      this.refreshTasks();
+    }
+  },
+  mounted: function mounted() {
+    // Actualiza las tareas al montar el componente
+    this.refreshTasks();
+  }
 });
 
 /***/ }),
@@ -1872,7 +1910,61 @@ var render = function render() {
     staticClass: "container mt-5"
   }, [_c("h1", {
     staticClass: "text-center mb-4"
-  }, [_vm._v("Task List")]), _vm._v(" "), _c("ul", {
+  }, [_vm._v("Task List")]), _vm._v(" "), _c("div", {
+    staticClass: "form-group"
+  }, [_c("label", {
+    staticClass: "mb-1 mr-2",
+    attrs: {
+      "for": "selectFilter"
+    }
+  }, [_vm._v("Filter")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.selectedFilter,
+      expression: "selectedFilter"
+    }],
+    staticClass: "custom-select my-1 mr-sm-2",
+    attrs: {
+      id: "selectFilter"
+    },
+    on: {
+      change: function change($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.selectedFilter = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }
+    }
+  }, _vm._l(_vm.optionFilters, function (option) {
+    return _c("option", {
+      domProps: {
+        value: option.value
+      }
+    }, [_vm._v("\n                " + _vm._s(option.text) + "\n            ")]);
+  }), 0)]), _vm._v(" "), _c("div", {
+    directives: [{
+      name: "show",
+      rawName: "v-show",
+      value: _vm.loading,
+      expression: "loading"
+    }],
+    staticClass: "spinner-border spinner-border-sm",
+    attrs: {
+      role: "status"
+    }
+  }, [_c("span", {
+    staticClass: "sr-only"
+  }, [_vm._v("Loading...")])]), _vm._v(" "), _c("ul", {
+    directives: [{
+      name: "show",
+      rawName: "v-show",
+      value: !_vm.loading,
+      expression: "!loading"
+    }],
     staticClass: "list-group mb-4"
   }, _vm._l(_vm.tasks, function (task) {
     return _c("li", {
@@ -1886,6 +1978,9 @@ var render = function render() {
       staticClass: "text-muted"
     }, [_vm._v("Assigned to: " + _vm._s(task.user))])]), _vm._v(" "), _c("div", [_c("button", {
       staticClass: "btn btn-success btn-sm mr-2",
+      attrs: {
+        disabled: !!task.completed
+      },
       on: {
         click: function click($event) {
           return _vm.completeTask(task.id);
@@ -2010,7 +2105,7 @@ __webpack_require__.r(__webpack_exports__);
 
 vue__WEBPACK_IMPORTED_MODULE_3__["default"].use(vuex__WEBPACK_IMPORTED_MODULE_4__["default"]);
 // Configuración global de Axios
-(axios__WEBPACK_IMPORTED_MODULE_2___default().defaults).baseURL = 'http://127.0.0.1:8000'; // Cambia esto a tu URL base si es necesario
+(axios__WEBPACK_IMPORTED_MODULE_2___default().defaults).baseURL = 'http://localhost:8000'; // Cambia esto a tu URL base si es necesario
 (axios__WEBPACK_IMPORTED_MODULE_2___default().defaults).headers.common['X-Requested-With'] = 'XMLHttpRequest';
 var app = new vue__WEBPACK_IMPORTED_MODULE_3__["default"]({
   el: '#app',
@@ -2048,8 +2143,29 @@ vue__WEBPACK_IMPORTED_MODULE_1__["default"].use(vuex__WEBPACK_IMPORTED_MODULE_2_
     tasks: [] // Estado inicial para las tareas
   },
   mutations: {
-    ADD_TASK: function ADD_TASK(state, task) {
-      state.tasks.push(task);
+    FETCH_TASKS: function FETCH_TASKS(state, tasks) {
+      state.tasks = tasks;
+    },
+    ADD_TASK: function ADD_TASK(state, _ref) {
+      var task = _ref.task,
+        filter = _ref.filter;
+      if (filter !== "completed") state.tasks.push(task);
+    },
+    COMPLETE_TASK: function COMPLETE_TASK(state, _ref2) {
+      var completedTask = _ref2.completedTask,
+        filter = _ref2.filter;
+      if (filter !== "pending") {
+        var index = state.tasks.findIndex(function (t) {
+          return t.id === completedTask.id;
+        });
+        if (index !== -1) {
+          vue__WEBPACK_IMPORTED_MODULE_1__["default"].set(state.tasks, index, completedTask);
+        }
+      } else {
+        state.tasks = state.tasks.filter(function (t) {
+          return t.id !== completedTask.id;
+        });
+      }
     },
     UPDATE_TASK: function UPDATE_TASK(state, updatedTask) {
       var index = state.tasks.findIndex(function (t) {
@@ -2066,24 +2182,51 @@ vue__WEBPACK_IMPORTED_MODULE_1__["default"].use(vuex__WEBPACK_IMPORTED_MODULE_2_
     }
   },
   actions: {
-    addTask: function addTask(_ref, task) {
-      var commit = _ref.commit;
+    fetchTasks: function fetchTasks(_ref3, payload) {
+      var commit = _ref3.commit;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().get("/tasks", payload).then(function (response) {
+        commit('FETCH_TASKS', response.data);
+      })["catch"](function (error) {
+        console.error("Error getting tasks:", error);
+      });
+    },
+    addTask: function addTask(_ref4, _ref5) {
+      var commit = _ref4.commit;
+      var task = _ref5.task,
+        filter = _ref5.filter;
       axios__WEBPACK_IMPORTED_MODULE_0___default().post('/tasks', task).then(function (response) {
-        commit('ADD_TASK', response.data);
+        task = response.data;
+        commit('ADD_TASK', {
+          task: task,
+          filter: filter
+        });
       })["catch"](function (error) {
         console.error("Error adding task:", error);
       });
     },
-    updateTask: function updateTask(_ref2, task) {
-      var commit = _ref2.commit;
+    completeTask: function completeTask(_ref6, _ref7) {
+      var commit = _ref6.commit;
+      var taskId = _ref7.taskId,
+        filter = _ref7.filter;
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post("/tasks-complete/".concat(taskId)).then(function (response) {
+        commit('COMPLETE_TASK', {
+          completedTask: response.data,
+          filter: filter
+        });
+      })["catch"](function (error) {
+        console.error("Error completing task:", error);
+      });
+    },
+    updateTask: function updateTask(_ref8, task) {
+      var commit = _ref8.commit;
       axios__WEBPACK_IMPORTED_MODULE_0___default().put("/tasks/".concat(task.id), task).then(function (response) {
         commit('UPDATE_TASK', response.data);
       })["catch"](function (error) {
         console.error("Error updating task:", error);
       });
     },
-    deleteTask: function deleteTask(_ref3, taskId) {
-      var commit = _ref3.commit;
+    deleteTask: function deleteTask(_ref9, taskId) {
+      var commit = _ref9.commit;
       axios__WEBPACK_IMPORTED_MODULE_0___default()["delete"]("/tasks/".concat(taskId)).then(function () {
         commit('DELETE_TASK', taskId);
       })["catch"](function (error) {
