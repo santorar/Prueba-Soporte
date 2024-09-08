@@ -82,3 +82,12 @@ Recuerda que el objetivo es demostrar tu capacidad para depurar y mejorar códig
 
 ¡Buena suerte!
    
+## Errores encontrados dentro del código
+- Error de cors dentro del backend donde las rutas las cuales están incluidas en el cors son las que tienen "api/" cuando las rutas de la api están sin este prefijo
+- Error con tokens CSRF donde se bloquea la consulta cuando se intenta enviar cualquier request al backend, al no tener una sesión iniciada dentro de la aplicación
+- El nombre de la tabla dentro del modelo de usuarios era incorrecto ya que este era 'users' y dentro de la base de datos esta tabla se llama user
+- En la base de datos no hay ningún usuario por lo tanto creamos un usuario de pruebas y posteriormente agregamos un endpoint para agregar nuevos usuarios
+- Cuando se agregan tareas no se muestran estas dentro de la lista por lo tanto se cambio el la lógica en vue para que trajera las tareas asignadas, agregando un nuevo método "FETCH_TASKS" obteniendo las tareas ingresadas anteriormente
+- Cuando se intenta completar una tarea no hay forma de completarla, esto ya que las funciones para completarla no existen, por lo tanto se creo una acción para completar la tarea. esta envía el id de la tarea y actualiza su campo completed
+- Arreglados todos los endpoints de tasks en los cuales hacia un redirect y por lo tanto no mostraba ninguna Información relevante, y hacia un redirect lo cual impedía que aparecieran los datos dentro de la lista de tareas
+- Desactivado el botón para completar las tareas en el caso de que ya estén completadas
